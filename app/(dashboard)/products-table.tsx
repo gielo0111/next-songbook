@@ -19,7 +19,9 @@ import { Product } from './product';
 import { SelectProduct } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from "react";
 import { Button } from '@/components/ui/button';
+import SongModal from '@/components/ui/SongModal';
 
 export function ProductsTable({
   products,
@@ -41,73 +43,50 @@ export function ProductsTable({
     router.push(`/?offset=${offset}`, { scroll: false });
   }
 
+  const [showSongModal, setShowSongModal] = useState(false);
+  const [songDetails, setSongDetails] = useState([]);
+  const [isEdit, setIsEdit] = useState(false);
+  const [isRefresh, setIsRefresh] = useState(false);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Products</CardTitle>
+        <CardTitle>Songs</CardTitle>
         <CardDescription>
-          Manage your products and view their sales performance.
+          Manage your songlist and view their artist and lyrics.
+          <br/><Button size="sm" className="h-8 gap-1" onClick={() => 
+          {
+        setIsEdit(false);
+        setShowSongModal(true);
+        setSongDetails([]);
+        }
+        }>
+              Add Song
+          </Button>
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="hidden w-[100px] sm:table-cell">
-                <span className="sr-only">Image</span>
-              </TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden md:table-cell">Price</TableHead>
-              <TableHead className="hidden md:table-cell">
-                Total Sales
-              </TableHead>
-              <TableHead className="hidden md:table-cell">Created at</TableHead>
-              <TableHead>
-                <span className="sr-only">Actions</span>
-              </TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Artist</TableHead>
+              <TableHead className="hidden md:table-cell">Lyrics</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {products.map((product) => (
-              <Product key={product.id} product={product} />
+              <Product key={product._id} setShowSongModal={setShowSongModal} setIsEdit={setIsEdit} setSongDetails={setSongDetails} product={product} />
             ))}
           </TableBody>
         </Table>
+        <SongModal isVisible={showSongModal} isEdit={isEdit} songDetails={songDetails} setIsRefresh={setIsRefresh} onClose={() => {
+          if(isRefresh){
+            window.location.reload();
+           }
+           setShowSongModal(false);
+        }}></SongModal>
       </CardContent>
-      <CardFooter>
-        <form className="flex items-center w-full justify-between">
-          <div className="text-xs text-muted-foreground">
-            Showing{' '}
-            <strong>
-              {Math.max(0, Math.min(offset - productsPerPage, totalProducts) + 1)}-{offset}
-            </strong>{' '}
-            of <strong>{totalProducts}</strong> products
-          </div>
-          <div className="flex">
-            <Button
-              formAction={prevPage}
-              variant="ghost"
-              size="sm"
-              type="submit"
-              disabled={offset === productsPerPage}
-            >
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Prev
-            </Button>
-            <Button
-              formAction={nextPage}
-              variant="ghost"
-              size="sm"
-              type="submit"
-              disabled={offset + productsPerPage > totalProducts}
-            >
-              Next
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </form>
-      </CardFooter>
     </Card>
   );
 }

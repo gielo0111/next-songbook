@@ -14,18 +14,17 @@ import {
 import { count, eq, ilike } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 
-export const db = drizzle(neon(process.env.POSTGRES_URL!));
+export const db = 'http://localhost:8080/songbook/'; 
+// drizzle(neon(process.env.POSTGRES_URL!));
 
 export const statusEnum = pgEnum('status', ['active', 'inactive', 'archived']);
 
 export const products = pgTable('products', {
-  id: serial('id').primaryKey(),
-  imageUrl: text('image_url').notNull(),
-  name: text('name').notNull(),
-  status: statusEnum('status').notNull(),
-  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-  stock: integer('stock').notNull(),
-  availableAt: timestamp('available_at').notNull()
+  _id: text('_id'),
+  title: text('title'),
+  artist: text('artist'), 
+  lyrics: text('lyrics'),
+  
 });
 
 export type SelectProduct = typeof products.$inferSelect;
@@ -41,12 +40,12 @@ export async function getProducts(
 }> {
   // Always search the full table, not per page
   if (search) {
+    let value = await fetch(db, {
+      method: 'GET'
+    }).then((response) => response.json())
+      .catch((error) => console.log(error))
     return {
-      products: await db
-        .select()
-        .from(products)
-        .where(ilike(products.name, `%${search}%`))
-        .limit(1000),
+      products: value, 
       newOffset: null,
       totalProducts: 0
     };
@@ -56,17 +55,18 @@ export async function getProducts(
     return { products: [], newOffset: null, totalProducts: 0 };
   }
 
-  let totalProducts = await db.select({ count: count() }).from(products);
-  let moreProducts = await db.select().from(products).limit(5).offset(offset);
+  let value = await fetch(db, {
+    method: 'GET'
+  }).then((response) => response.json())
+    .catch((error) => console.log(error))
+
+  let totalProducts = value; 
+  let moreProducts = value
   let newOffset = moreProducts.length >= 5 ? offset + 5 : null;
 
   return {
     products: moreProducts,
     newOffset,
-    totalProducts: totalProducts[0].count
+    totalProducts: totalProducts.length+1
   };
-}
-
-export async function deleteProductById(id: number) {
-  await db.delete(products).where(eq(products.id, id));
 }
